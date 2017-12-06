@@ -2,6 +2,7 @@ package org.bykov.cbtest;
 
 import java.io.*;
 import java.util.ArrayList;
+import org.apache.log4j.Logger;
 
 /**
  * Представление для исходной матрицы
@@ -39,6 +40,7 @@ public class Matrix {
     }
 
     public void readFromFile(String source) {
+        logger.debug("Read data file: " + source);
         values.clear();
         usedMap.clear();
         height = 0;
@@ -59,8 +61,10 @@ public class Matrix {
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+            logger.error("Read file error : "  + e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
+            logger.error("Read file error : "  + e.getMessage());
         }
     }
 
@@ -110,9 +114,7 @@ public class Matrix {
         usedMap.set(index, USED_CELL);
 
         appendNextCell(domain, index, DIR_RIGHT);
-        appendNextCell(domain, index, DIR_RIGHT_DOWN);
         appendNextCell(domain, index, DIR_DOWN);
-        appendNextCell(domain, index, DIR_LEFT_DOWN);
         // остальные направления не смотрим, т.к. двигаясь по массиву сверху-вниз и слева-направо,
         // мы уже смотрели элементы "слева-сверху"
     }
@@ -145,20 +147,20 @@ public class Matrix {
         }
 
         if (!found) {
-            domains.add(domain);
+            if (!domain.isFreeze()) {
+                domains.add(domain);
+                // "зафиксируем" что уже есть в списке...
+                domain.setFreeze(true);
+            }
         }
     }
 
     private void initValues() {
         findDir[DIR_TOP]        = -width-2;
-        findDir[DIR_RIGHT_TOP]  = -width - 3;
         findDir[DIR_RIGHT]      = 1;
-        findDir[DIR_RIGHT_DOWN] = width + 3;
 
         findDir[DIR_DOWN]       = -findDir[DIR_TOP];
-        findDir[DIR_LEFT_DOWN]  = -findDir[DIR_RIGHT_TOP];
         findDir[DIR_LEFT]       = -findDir[DIR_RIGHT];
-        findDir[DIR_LEFT_TOP]  = -findDir[DIR_RIGHT_DOWN];
 
         firstNdx = width + 3;
         lastNdx = values.size() - 3;
@@ -219,18 +221,16 @@ public class Matrix {
 
     // Направления поиска следующего элемента для включения в домен
     private static int DIR_TOP        = 0;
-    private static int DIR_RIGHT_TOP  = 1;
-    private static int DIR_RIGHT      = 2;
-    private static int DIR_RIGHT_DOWN = 3;
-    private static int DIR_DOWN       = 4;
-    private static int DIR_LEFT_DOWN  = 5;
-    private static int DIR_LEFT       = 6;
-    private static int DIR_LEFT_TOP   = 7;
+    private static int DIR_RIGHT      = 1;
+    private static int DIR_DOWN       = 2;
+    private static int DIR_LEFT       = 3;
 
-    private static int DIR_COUNT = 8;
+    private static int DIR_COUNT = 4;
 
     private static int BORDER_VALUE = 0;
     private static int DOMAIN_VALUE = 1;
     private static int FREE_CELL = 0;
     private static int USED_CELL = 1;
+
+    private static final Logger logger = Logger.getLogger(Matrix.class);
 }
